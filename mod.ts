@@ -32,14 +32,18 @@ type FromLiteral<L> = L extends String ? String
 
 type LiteralConstructor<T> = new (...args: any[]) => FromLiteral<T>
 type FlagType<FlagDef extends FlagDefinition> = FlagDef extends LiteralConstructor<infer R>
-  ? ToLiteral<R> extends boolean ? boolean : ToLiteral<R> | undefined
+  ? ToLiteral<R> extends boolean
+    ? boolean
+    : ToLiteral<R> | undefined
   : FlagDef extends FlagDefinitionObject<any, any>
-    ? FlagDef["type"] extends new () => infer TR
-      ? FlagDef["default"] extends ToLiteral<TR> ? ToLiteral<TR>
-      : ToLiteral<TR> extends boolean ? ToLiteral<TR>
-      : ToLiteral<TR> | undefined
+    ? FlagDef["type"] extends LiteralConstructor<infer TR>
+      ? FlagDef["default"] extends ToLiteral<TR>
+        ? ToLiteral<TR>
+        : ToLiteral<TR> extends boolean
+          ? ToLiteral<TR>
+          : ToLiteral<TR> | undefined
+      : never
     : never
-  : never;
 type OnlyKeysOfType<T, IncludeType> = { [K in keyof T]: T[K] extends IncludeType ? never : K }[keyof T]
 type OmitKeysOfType<T, ExcludeType> = { [K in keyof T]: T[K] extends ExcludeType ? K : never }[keyof T]
 type FlagResult<Def extends FlagsDefinition<Def>> = {
@@ -89,13 +93,13 @@ export function parseFlags<Def extends FlagsDefinition<Def>>(def: Def, args: str
 
   for (const [key, value] of entries) {
     if (typeof value === 'string') continue
-    if (value === Boolean) continue
-    else if (value === String) res[key] = ''+result[key]
-    else if (value === Number) res[key] = +result[key]
+    if (value === Boolean) res[key] = result[key]
+    else if (value === String && key in res) res[key] = ''+result[key]
+    else if (value === Number && key in res) res[key] = +result[key]
     else if (typeof value === 'object') {
-      if (value.type === Boolean) continue
-      else if (value.type === String) res[key] = ''+result[key]
-      else if (value.type === Number) res[key] = +result[key]
+      if (value.type === Boolean) res[key] = result[key]
+      else if (value.type === String && key in res) res[key] = ''+result[key]
+      else if (value.type === Number && key in res) res[key] = +result[key]
     }
   }
 
