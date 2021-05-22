@@ -31,12 +31,13 @@ type FromLiteral<L> = L extends String ? String
   : never
 
 type LiteralConstructor<T> = new (...args: any[]) => FromLiteral<T>
-type FlagType<FlagDef extends FlagDefinition> = FlagDef extends LiteralConstructor<infer R>
+type Constructor<T> = new (...args: any[]) => T
+type FlagType<FlagDef extends FlagDefinition> = FlagDef extends Constructor<infer R>
   ? ToLiteral<R> extends boolean
     ? boolean
     : ToLiteral<R> | undefined
   : FlagDef extends FlagDefinitionObject<any, any>
-    ? FlagDef["type"] extends LiteralConstructor<infer TR>
+    ? FlagDef["type"] extends Constructor<infer TR>
       ? FlagDef["default"] extends ToLiteral<TR>
         ? ToLiteral<TR>
         : ToLiteral<TR> extends boolean
@@ -47,7 +48,7 @@ type FlagType<FlagDef extends FlagDefinition> = FlagDef extends LiteralConstruct
 type OnlyKeysOfType<T, IncludeType> = { [K in keyof T]: T[K] extends IncludeType ? never : K }[keyof T]
 type OmitKeysOfType<T, ExcludeType> = { [K in keyof T]: T[K] extends ExcludeType ? K : never }[keyof T]
 type FlagResult<Def extends FlagsDefinition<Def>> = {
-  [K in keyof Omit<Def, OmitKeysOfType<Def, string>>]: Def[K] extends FlagDefinition ? FlagType<Def[K]> : never
+  readonly [K in keyof Omit<Def, OmitKeysOfType<Def, string>>]: Def[K] extends FlagDefinition ? FlagType<Def[K]> : never
 }
 
 export interface FlagsDefinition<Def extends FlagsDefinition<Def>> {
