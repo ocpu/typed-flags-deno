@@ -95,12 +95,12 @@ export function parseFlags<Def extends FlagsDefinition<Def>>(def: Def, args: str
   for (const [key, value] of entries) {
     if (typeof value === 'string') continue
     if (value === Boolean) res[key] = result[key]
-    else if (value === String && key in res) res[key] = ''+result[key]
-    else if (value === Number && key in res) res[key] = +result[key]
+    else if (value === String && !(key in res)) res[key] = ''+result[key]
+    else if (value === Number && !(key in res)) res[key] = +result[key]
     else if (typeof value === 'object') {
       if (value.type === Boolean) res[key] = result[key]
-      else if (value.type === String && key in res) res[key] = ''+result[key]
-      else if (value.type === Number && key in res) res[key] = +result[key]
+      else if (value.type === String && !(key in res)) res[key] = ''+result[key]
+      else if (value.type === Number && !(key in res)) res[key] = +result[key]
     }
   }
 
