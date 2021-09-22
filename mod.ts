@@ -45,14 +45,14 @@ type FlagType<FlagDef extends FlagDefinition> = FlagDef extends Constructor<infe
           : ToLiteral<TR> | undefined
       : never
     : never
-type OnlyKeysOfType<T, IncludeType> = { [K in keyof T]: T[K] extends IncludeType ? never : K }[keyof T]
-type OmitKeysOfType<T, ExcludeType> = { [K in keyof T]: T[K] extends ExcludeType ? K : never }[keyof T]
+type OmitKeysOfType<T, ExcludeType> = { [K in keyof T]: T[K] extends ExcludeType ? never : K }[keyof T]
+type OnlyKeysOfType<T, IncludeType> = { [K in keyof T]: T[K] extends IncludeType ? K : never }[keyof T]
 type FlagResult<Def extends FlagsDefinition<Def>> = {
-  readonly [K in keyof Omit<Def, OmitKeysOfType<Def, string>>]: Def[K] extends FlagDefinition ? FlagType<Def[K]> : never
+  readonly [K in keyof Omit<Def, OnlyKeysOfType<Def, string>>]: Def[K] extends FlagDefinition ? FlagType<Def[K]> : never
 }
 
 export interface FlagsDefinition<Def extends FlagsDefinition<Def>> {
-  [name: string]: FlagDefinition | OnlyKeysOfType<Def, string>
+  [name: string]: FlagDefinition | OmitKeysOfType<Def, string>
 }
 
 export type FlagsResult<Def extends FlagsDefinition<Def>> = FlagResult<Def> & { _: readonly string[] }
@@ -60,7 +60,7 @@ export type FlagsResult<Def extends FlagsDefinition<Def>> = FlagResult<Def> & { 
 export function parseFlags<Def extends FlagsDefinition<Def>>(def: Def): FlagsResult<Def>
 export function parseFlags<Def extends FlagsDefinition<Def>>(def: Def, args: string[]): FlagsResult<Def>
 export function parseFlags<Def extends FlagsDefinition<Def>>(def: Def, args: string[] = Deno.args): FlagsResult<Def> {
-  const entries = Object.entries(def) as [string, FlagDefinition | OnlyKeysOfType<Def, string>][]
+  const entries = Object.entries(def) as [string, FlagDefinition | OmitKeysOfType<Def, string>][]
   const alias = (entries
     .filter(([, value]) => typeof value === 'string') as [string, string][])
     .reduce((aliases, [alias, flag]) => {
